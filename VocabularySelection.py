@@ -25,7 +25,7 @@ from nltk.corpus import stopwords
 
 # Globals
 printStatementsOn = False
-numEntries = 30
+numEntries = 50
 # (Title Only)
 # 200: ~4.2s
 # 1000: ~12.4s
@@ -85,12 +85,12 @@ file.close() # Close files after use
 
 # 3 Method 2
 for entry in entries:
-    class_var = entry[0]
+    # class_var = entry[0]
 
     # Normalize Title
-    titleVar = entry[1].lower()
-    titleVar = remove_punctuation(titleVar, punctuation)
-    titleWords = titleVar.split(" ")
+    # titleVar = entry[1].lower()
+    # titleVar = remove_punctuation(titleVar, punctuation)
+    # titleWords = titleVar.split(" ")
 
     # Normalize Description
     descriptionVar = entry[2].lower()
@@ -98,15 +98,15 @@ for entry in entries:
     descriptionWords = descriptionVar.split(" ")
 
     # Get counts of words in document
-    wordcount_map = {} # [word] -> [counts in document]
-    for word in titleWords:
-        if len(word) == 0: continue
-        if word in stopwords.words(): continue
-        if word_validator.check(word) == False: continue
-        # if word in wordcount_map: wordcount_map[word] += 1
-        # else: wordcount_map[word] = 1
-        if word in termFreqOverall.keys(): termFreqOverall[word] += 1
-        else: termFreqOverall[word] = 1
+    # wordcount_map = {} # [word] -> [counts in document]
+    # for word in titleWords:
+    #     if len(word) == 0: continue
+    #     if word in stopwords.words(): continue
+    #     if word_validator.check(word) == False: continue
+    #     # if word in wordcount_map: wordcount_map[word] += 1
+    #     # else: wordcount_map[word] = 1
+    #     if word in termFreqOverall.keys(): termFreqOverall[word] += 1
+    #     else: termFreqOverall[word] = 1
     
     for word in descriptionWords:
         if len(word) == 0: continue
