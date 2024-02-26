@@ -11,7 +11,7 @@ numEntries = 1000
 trainFilePath = "train.csv"
 testFilePath = "test.csv"
 punctuation = [".", ",", ":", "'", ")", "(", "?", "-", "!"]
-printStatementsOn = True
+printStatementsOn = False
 BM25_k = 25
 
 # HELPER FUNCTIONS
@@ -67,8 +67,8 @@ def numStringMatches(input:str, stringList:list[str]) -> int:
 
 def BM25(countWordInDoc:int, k: int) -> float: return (((k + 1)*countWordInDoc) / (countWordInDoc + k))
 
-# 1. Create a script that automates the process of computing word relevances using 
-# a vector space representation using the TF-IDF using Okapi-BM25 - without document length normalization.
+# 1. Create a script that automates the process of computing word relevances using a vector space
+# representation using the TF-IDF using Okapi-BM25 - without document length normalization.
 
 # Document Relevance with Vector Space TF-IDF Model 
 def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]:
@@ -94,7 +94,6 @@ def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]
     for document in data:
         documentScore = 0
         # Normalize title/description
-        normalizedTitle = normalizedInputArray(document[1])
         normalizedDesc = normalizedInputArray(document[2])
 
         # Method 3: TF weighting and IDF (inverse document frequency)
@@ -104,7 +103,7 @@ def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]
         #     IDFweight = math.log(float(numDocs + 1) / frequency)
         #     # Calculate CountWordInQuery & CountWordInDoc
         #     countWordInQuery = queryCountInQueryList[queryWord]
-        #     countWordInDoc = numStringMatches(queryWord, normalizedTitle) + numStringMatches(queryWord, normalizedDesc)
+        #     countWordInDoc = numStringMatches(queryWord, normalizedDesc)
         #     # Add current weight to document score 
         #     currentQueryWordWeight = countWordInQuery*countWordInDoc*IDFweight
         #     documentScore += currentQueryWordWeight
@@ -116,7 +115,7 @@ def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]
             currIDFweight = IDFweight(numDocs, frequency)
             # Calculate CountWordInQuery & BM25_value (replaces CountWordInDoc)
             countWordInQuery = queryCountInQueryList[queryWord]
-            countWordInDoc = numStringMatches(queryWord, normalizedTitle) + numStringMatches(queryWord, normalizedDesc)
+            countWordInDoc = numStringMatches(queryWord, normalizedDesc)
             BM25_Value = BM25(countWordInDoc, BM25_k)
             # Add current weight to document score
             currentTermScore = float(countWordInQuery) * BM25_Value * currIDFweight
@@ -135,6 +134,7 @@ def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]
 
     return vectorSpaceScores
 
+
 # 2. Test your implementation for the following queries:
 #   • q = “olympic gold athens”
 #   • q = “reuters stocks friday”
@@ -149,6 +149,7 @@ trainVSBV3 = vectorSpaceIDFVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
 
-testVSBV = vectorSpaceIDFVector(testFilePath, 7600, query1)
-testVSBV2 = vectorSpaceIDFVector(testFilePath, 7600, query2)
-testVSBV3 = vectorSpaceIDFVector(testFilePath, 7600, query3)
+if numEntries > 7600: numEntries = 7600
+testVSBV = vectorSpaceIDFVector(testFilePath, numEntries, query1)
+testVSBV2 = vectorSpaceIDFVector(testFilePath, numEntries, query2)
+testVSBV3 = vectorSpaceIDFVector(testFilePath, numEntries, query3)

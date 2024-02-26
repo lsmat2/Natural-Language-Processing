@@ -1,7 +1,8 @@
 import csv
-# import pandas as pd
 
-
+# – Vector = 0-1 bit vector (word presence/absence) : vectorSpaceBitVector(documents, numDocs, query)
+# – Similarity = dot product
+# – f(q,d) = number of distinct query words matched in d
 
 numEntries = 110
 trainFilePath = "train.csv"
@@ -52,13 +53,13 @@ def vectorSpaceBitVector(filePath:str, numEntries:int, query:str) -> list[int]:
     for row in data:
         count = 0
         # Normalize title/description
-        normalizedTitle = normalizedInputArray(row[1])
+        # normalizedTitle = normalizedInputArray(row[1])
         normalizedDesc = normalizedInputArray(row[2])
         # Count += 1 : For each time a query word appears in doc title/desc
         
         # Method 1: ignore duplicates
-        for word in normalizedTitle:
-            if word in normalizedQuery: count += 1
+        # for word in normalizedTitle:
+        #     if word in normalizedQuery: count += 1
         for word in normalizedDesc:
             if word in normalizedQuery: count += 1
         
@@ -98,6 +99,7 @@ trainVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
 
+if numEntries > 7600: numEntries = 7600
 testVSBV = vectorSpaceBitVector(testFilePath, numEntries, query1)
 testVSBV2 = vectorSpaceBitVector(testFilePath, numEntries, query2)
 testVSBV3 = vectorSpaceBitVector(testFilePath, numEntries, query3)
