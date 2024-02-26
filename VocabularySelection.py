@@ -122,9 +122,6 @@ for entry in entries:
     #     if key in termFreqOverall.keys(): termFreqOverall[key] += value
     #     else: termFreqOverall[key] = value
     
-
-
-
 if printStatementsOn: 
     for key, values in normalizedData.items(): print(f"{key}: {values}")
 
