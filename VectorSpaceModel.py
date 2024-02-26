@@ -98,6 +98,6 @@ trainVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
 
-testVSBV = vectorSpaceBitVector(trainFilePath, numEntries, query1)
-testVSBV2 = vectorSpaceBitVector(trainFilePath, numEntries, query2)
-testVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
+testVSBV = vectorSpaceBitVector(testFilePath, numEntries, query1)
+testVSBV2 = vectorSpaceBitVector(testFilePath, numEntries, query2)
+testVSBV3 = vectorSpaceBitVector(testFilePath, numEntries, query3)
