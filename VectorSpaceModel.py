@@ -1,10 +1,11 @@
 import csv
+import numpy as np
 
 # – Vector = 0-1 bit vector (word presence/absence) : vectorSpaceBitVector(documents, numDocs, query)
 # – Similarity = dot product
 # – f(q,d) = number of distinct query words matched in d
 
-numEntries = 110
+numEntries = 7000
 trainFilePath = "train.csv"
 testFilePath = "test.csv"
 punctuation = [".", ",", ":", "'", ")", "(", "?", "-", "!"]
@@ -36,6 +37,42 @@ def getDataFromFile(filePath:str, numEntries:int) -> list:
     data = readEntries(csvreader, numEntries)
     file.close()
     return data
+
+def printTopFive(VSMmodel:list, data): # PRINT RESULT OF TOP-5 AND BOTTOM-5 MOST RELEVANT DOCUMENTS WITH RANKING VALUES
+    # Get Index Array of Top 5 rankings
+    indicesOfLargestFive = np.argsort(VSMmodel)[-5:] # Selects last 5 indices from ascending order array
+    
+    print("TOP FIVE RANKED DOCUMENTS:")
+    for i in range(len(indicesOfLargestFive)):
+        index = indicesOfLargestFive[len(indicesOfLargestFive) - 1 - i]
+        score = VSMmodel[index]
+        title = data[index][1]
+        description = data[index][2]
+        print("Doc Rank:", i + 1, "\nScore:", score, "\tTitle:", title, "\tDescription:", description)
+    print("")
+
+def printBottomFive(VSMmodel:list, data):
+    # Get Index Array of Bottom 5 (nonzero) rankings
+    VSMarray = np.array(VSMmodel)
+    nonZeroIndices = np.nonzero(VSMarray)[0]
+    numRankedDocuments = len(nonZeroIndices)
+    sorted_indices = np.argsort(VSMarray[nonZeroIndices])
+    filtered_indices = nonZeroIndices[sorted_indices]
+    indicesOfSmallestFive = filtered_indices[:5]
+    
+    print("BOTTOM FIVE RANKED DOCUMENTS (>0):")
+    for i in range(len(indicesOfSmallestFive)):
+        index = indicesOfSmallestFive[len(indicesOfSmallestFive) - 1 - i]
+        score = VSMmodel[index]
+        title = data[index][1]
+        description = data[index][2]
+        print("Doc Rank:", numRankedDocuments - (3 - i), "\nScore:", score, "\tTitle:", title, "\tDescription:", description)
+    print("")
+
+def printTopAndBottomFive(VSMmodel:list, filePath:str):
+    data = getDataFromFile(filePath, numEntries)
+    printTopFive(VSMmodel, data)
+    printBottomFive(VSMmodel, data)
 
 # 1. Create a script that automates the process of computing word relevances using a vector space 
 # representation using the bit-vector representation - without document length normalization.
@@ -94,7 +131,7 @@ query2 = "reuters stocks friday"
 query3 = "investment market prices"
 
 trainVSBV = vectorSpaceBitVector(trainFilePath, numEntries, query1)
-testVSBV2 = vectorSpaceBitVector(trainFilePath, numEntries, query2)
+trainVSBV2 = vectorSpaceBitVector(trainFilePath, numEntries, query2)
 trainVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
@@ -103,3 +140,21 @@ if numEntries > 7600: numEntries = 7600
 testVSBV = vectorSpaceBitVector(testFilePath, numEntries, query1)
 testVSBV2 = vectorSpaceBitVector(testFilePath, numEntries, query2)
 testVSBV3 = vectorSpaceBitVector(testFilePath, numEntries, query3)
+
+# Print out results
+
+print("\nQUERY: olympic gold athens\n")
+print("Training:")
+printTopAndBottomFive(trainVSBV, trainFilePath)
+print("Test:")
+printTopAndBottomFive(testVSBV, testFilePath)
+print("\n\nQUERY: reuters stocks friday\n")
+print("Train:")
+printTopAndBottomFive(trainVSBV2, trainFilePath)
+print("Test:")
+printTopAndBottomFive(testVSBV2, testFilePath)
+print("\n\nQUERY: investment market prices\n")
+print("Train:")
+printTopAndBottomFive(trainVSBV3, trainFilePath)
+print("Test:")
+printTopAndBottomFive(testVSBV3, testFilePath)
