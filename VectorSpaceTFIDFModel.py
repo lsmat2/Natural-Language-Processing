@@ -1,4 +1,5 @@
 import csv
+import math
 
 
 # – Vector = 0-1 bit vector (word presence/absence) : vectorSpaceBitVector(documents, numDocs, query)
@@ -6,11 +7,12 @@ import csv
 # – f(q,d) = number of distinct query words matched in d
 
 
-numEntries = 100
+numEntries = 1000
 trainFilePath = "train.csv"
 testFilePath = "test.csv"
 punctuation = [".", ",", ":", "'", ")", "(", "?", "-", "!"]
-printStatementsOn = False
+printStatementsOn = True
+BM25_k = 25
 
 # HELPER FUNCTIONS
 def remove_punctuation(inputString:str, charactersToRemove:list[str]) -> str:
@@ -39,75 +41,89 @@ def getDataFromFile(filePath:str, numEntries:int) -> list:
     file.close()
     return data
 
-def vectorSpaceBitVector(filePath:str, numEntries:int, query:str) -> list[int]:
-    vectorSpaceScores = [0] * (numEntries + 1)
-    # Retrieve data from file
-    data = getDataFromFile(filePath, numEntries)
-    # Normalize query
-    normalizedQuery = normalizedInputArray(query)
-    if printStatementsOn: print("Query words: ", normalizedQuery)
-    # Calculate vector space score for each document
-    index = 0
-    for row in data:
-        count = 0
-        # Normalize title/description
-        normalizedTitle = normalizedInputArray(row[1])
-        normalizedDesc = normalizedInputArray(row[2])
-        # Count += 1 : For each time a query word appears in doc title/desc
-        # Method: Term Frequency Weighting (account for duplicates)
-        for word in normalizedTitle:
-            for queryWord in normalizedQuery: 
-                if word == queryWord: count += 1
-        for word in normalizedDesc:
-            for queryWord in normalizedQuery:
-                if word == queryWord: count += 1
-        # Update vector space model array
-        vectorSpaceScores[index] = count
-        index += 1
+def docFrequency(queryTerm:str, documentList:list) -> float:
+    numDocs = 0
+    queryFrequency = 0
+    for document in documentList:
+        if queryTerm in normalizedInputArray(document[1]): queryFrequency += 1 # Checks for term in title
+        elif queryTerm in normalizedInputArray(document[2]): queryFrequency += 1 # Checks for term in description
+        numDocs += 1
+    return float(queryFrequency / numDocs)
 
-    return vectorSpaceScores
+def numDocsInList(documentList:list) -> int:
+    numDocs = 0
+    for document in documentList : numDocs += 1
+    return numDocs
 
-# 1. Create a script that automates the process of computing word relevances using a vector space 
-# representation using the bit-vector representation - without document length normalization.
+def IDFweight(numDocs:int, frequency:float) -> float:
+    if frequency == 0: return 0
+    else: return math.log(float(numDocs + 1) / frequency)
 
-# Document Relevance with Vector Space Basic Model 
+def numStringMatches(input:str, stringList:list[str]) -> int:
+    count = 0
+    for string in stringList:
+        if string == input: count += 1
+    return count
+
+def BM25(countWordInDoc:int, k: int) -> float: return (((k + 1)*countWordInDoc) / (countWordInDoc + k))
+
+# 1. Create a script that automates the process of computing word relevances using 
+# a vector space representation using the TF-IDF using Okapi-BM25 - without document length normalization.
+
+# Document Relevance with Vector Space TF-IDF Model 
 def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]:
     vectorSpaceScores = [0] * (numEntries + 1)
+    
     # Retrieve data from file
     data = getDataFromFile(filePath, numEntries)
+    
     # Normalize query
     normalizedQuery = normalizedInputArray(query)
-    if printStatementsOn: print("Query words: ", normalizedQuery)
-    # Initialize Frequency List for each Query Term
-    queryTermFrequencyList = []
+    # if printStatementsOn: print("Query words: ", normalizedQuery)
+    
+    # Initialize Frequency Map [query -> frequency] for each Query Term, and numDocs
+    numDocs = numDocsInList(data)
+    queryTermFrequencyList = {}
+    queryCountInQueryList = {}
     for queryTerm in normalizedQuery:
         frequency = docFrequency(queryTerm, data)
-        queryTermFrequencyList.append(frequency)
+        queryTermFrequencyList[queryTerm] = frequency
+        queryCountInQueryList[queryTerm] = (numStringMatches(queryTerm, normalizedQuery))
     # Calculate vector space TF-IDF score for each document
     index = 0
-    for row in data:
-        count = 0
+    for document in data:
+        documentScore = 0
         # Normalize title/description
-        normalizedTitle = normalizedInputArray(row[1])
-        normalizedDesc = normalizedInputArray(row[2])
-        # Count += 1 : For each time a query word appears in doc title/desc
-        
-        # Method 1: ignore duplicates
-        for word in normalizedTitle:
-            if word in normalizedQuery: count += 1
-        for word in normalizedDesc:
-            if word in normalizedQuery: count += 1
-        
-        # Method 2: account for duplicates --> improved (Term Frequency Weighting)
-        # for word in normalizedTitle:
-        #     for queryWord in normalizedQuery: 
-        #         if word == queryWord: count += 1
-        # for word in normalizedDesc:
-        #     for queryWord in normalizedQuery:
-        #         if word == queryWord: count += 1
-            
+        normalizedTitle = normalizedInputArray(document[1])
+        normalizedDesc = normalizedInputArray(document[2])
+
+        # Method 3: TF weighting and IDF (inverse document frequency)
+        # for queryWord in normalizedQuery:
+        #     # Calculate IDF Weight [log(M+1)/df(w)]
+        #     frequency = queryTermFrequencyList[queryWord]
+        #     IDFweight = math.log(float(numDocs + 1) / frequency)
+        #     # Calculate CountWordInQuery & CountWordInDoc
+        #     countWordInQuery = queryCountInQueryList[queryWord]
+        #     countWordInDoc = numStringMatches(queryWord, normalizedTitle) + numStringMatches(queryWord, normalizedDesc)
+        #     # Add current weight to document score 
+        #     currentQueryWordWeight = countWordInQuery*countWordInDoc*IDFweight
+        #     documentScore += currentQueryWordWeight
+
+        # Method 4: TF Transformation: BM25 -->     (k + 1)x / (x + k)   --> choosing k = 25
+        for queryWord in normalizedQuery:
+            # Calculate IDF Weight [log(M+1)/df(w)]
+            frequency = queryTermFrequencyList[queryWord]
+            currIDFweight = IDFweight(numDocs, frequency)
+            # Calculate CountWordInQuery & BM25_value (replaces CountWordInDoc)
+            countWordInQuery = queryCountInQueryList[queryWord]
+            countWordInDoc = numStringMatches(queryWord, normalizedTitle) + numStringMatches(queryWord, normalizedDesc)
+            BM25_Value = BM25(countWordInDoc, BM25_k)
+            # Add current weight to document score
+            currentTermScore = float(countWordInQuery) * BM25_Value * currIDFweight
+            documentScore += currentTermScore
+                            
         # Update vector space model array
-        vectorSpaceScores[index] = count
+        vectorSpaceScores[index] = documentScore
         index += 1
     
     if printStatementsOn:
@@ -118,17 +134,6 @@ def vectorSpaceIDFVector(filePath:str, numEntries:int, query:str) -> list[float]
             docID += 1
 
     return vectorSpaceScores
-
-def docFrequency(queryTerm:str, documentList:list) -> float:
-    numDocs = 0
-    queryFrequency = 0
-    for document in documentList:
-        if queryTerm in normalizedInputArray(document[1]): queryFrequency += 1 # Checks for term in title
-        elif queryTerm in normalizedInputArray(document[2]): queryFrequency += 1 # Checks for term in description
-        numDocs += 1
-    return float(queryFrequency / numDocs)
-
-
 
 # 2. Test your implementation for the following queries:
 #   • q = “olympic gold athens”
@@ -144,6 +149,6 @@ trainVSBV3 = vectorSpaceIDFVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
 
-testVSBV = vectorSpaceIDFVector(testFilePath, numEntries, query1)
-testVSBV2 = vectorSpaceIDFVector(testFilePath, numEntries, query2)
-testVSBV3 = vectorSpaceIDFVector(testFilePath, numEntries, query3)
+testVSBV = vectorSpaceIDFVector(testFilePath, 7600, query1)
+testVSBV2 = vectorSpaceIDFVector(testFilePath, 7600, query2)
+testVSBV3 = vectorSpaceIDFVector(testFilePath, 7600, query3)
