@@ -3,10 +3,11 @@ import csv
 
 
 
-numEntries = 100
-filePath = "test.csv"
+numEntries = 110
+trainFilePath = "train.csv"
+testFilePath = "test.csv"
 punctuation = [".", ",", ":", "'", ")", "(", "?", "-", "!"]
-printStatementsOn = True
+printStatementsOn = False
 
 # HELPER FUNCTIONS
 def remove_punctuation(inputString:str, charactersToRemove:list[str]) -> str:
@@ -54,10 +55,21 @@ def vectorSpaceBitVector(filePath:str, numEntries:int, query:str) -> list[int]:
         normalizedTitle = normalizedInputArray(row[1])
         normalizedDesc = normalizedInputArray(row[2])
         # Count += 1 : For each time a query word appears in doc title/desc
+        
+        # Method 1: ignore duplicates
         for word in normalizedTitle:
             if word in normalizedQuery: count += 1
         for word in normalizedDesc:
             if word in normalizedQuery: count += 1
+        
+        # Method 2: account for duplicates --> improved (Term Frequency Weighting)
+        # for word in normalizedTitle:
+        #     for queryWord in normalizedQuery: 
+        #         if word == queryWord: count += 1
+        # for word in normalizedDesc:
+        #     for queryWord in normalizedQuery:
+        #         if word == queryWord: count += 1
+            
         # Update vector space model array
         vectorSpaceScores[index] = count
         index += 1
@@ -79,8 +91,13 @@ def vectorSpaceBitVector(filePath:str, numEntries:int, query:str) -> list[int]:
 query1 = "olympic gold athens"
 query2 = "reuters stocks friday"
 query3 = "investment market prices"
-testQueryVSBV = vectorSpaceBitVector(filePath, numEntries, query1)
-testQueryVSBV2 = vectorSpaceBitVector(filePath, numEntries, query2)
-testQueryVSBV3 = vectorSpaceBitVector(filePath, numEntries, query3)
+
+trainVSBV = vectorSpaceBitVector(trainFilePath, numEntries, query1)
+testVSBV2 = vectorSpaceBitVector(trainFilePath, numEntries, query2)
+trainVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
 
 # 3. Test your implementation for words from the test-set in the dataset.
+
+testVSBV = vectorSpaceBitVector(trainFilePath, numEntries, query1)
+testVSBV2 = vectorSpaceBitVector(trainFilePath, numEntries, query2)
+testVSBV3 = vectorSpaceBitVector(trainFilePath, numEntries, query3)
